@@ -1,0 +1,14 @@
+- Rotation.php (2 hours)
+
+- Callback.php (2 hours)
+
+- Callback daemon (2 hours) Just use the current method now.
+
+- deposits.php (5 hours)
+	- integrating WonderfulPay (2 hours)
+
+- users.php (2 hours) /* only for admins, so lower priority. we'll just hardcode the installation. */
+
+- groups.php (2 hours) /* only for admins, so lower priority. we'll just hardcode the installation. */
+
+- gateways.php (2 hours) /* only for admins, so lower priority. */

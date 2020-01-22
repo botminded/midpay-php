@@ -1,0 +1,42 @@
+DEPOSIT ALGO:
+
+- Auth:
+	- Call the auth procedure to make sure either:
+		- An API key is provided.
+	- The authed user must be an operator.
+	- Store the user id into a temp var.
+	- Store the auth log id into a temp var.
+
+- Extract Params:
+	- the user provided order id
+	- the amount
+	- the ip address of player
+	- the callback
+	- the redirect url (optional)
+
+- While gateway channel not found AND num tries < the global num tries:
+	- get a gateway channel by running the rotation algo once.
+	- find the gateway file 
+	
+	- execute the gateway file, passing in:
+		- the channel
+		- the amount
+		- the generated order id
+		- the ip address of player
+		- the redirect url (optional)
+			- if a redirect url is required by the gateway, midpay will simply include a close page.
+	
+	- The gateway file must pass out:
+		- the status 
+		- the data
+		- the data type (QR, URL)
+
+- Write the order into the database:
+
+
+
+- Create the response:
+	
+
+
+
