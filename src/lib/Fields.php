@@ -14,12 +14,9 @@ class Fields
 	const WHERE = 1;
 	const DATA = 2;
 
-	private static function _inSpecialKeys($k) 
-	{
-		return in_array($k, array('AND', 'OR', 'GROUP', 'ORDER', 'HAVING', 'LIMIT', 'LIKE', 'MATCH'));
-	}
+	const VALIATION_ERROR_CODE = 5001;
 
-	public static function _validateValue($table, $dbFieldName, $value, &$mappings, $mode)
+	private static function _validateValue($mode, $table, $dbFieldName, $value, &$mappings)
 	{
 		$schema = Db::schema($table);
 		if (is_null($schema)) return false;
@@ -27,90 +24,85 @@ class Fields
 
 		$p = $schema[$dbFieldName];
 
-		$sl = strlen('' . $value);
-		$notEmpty = $sl > 0;
+		$valueLength = strlen('' . $value);
+		$notEmpty = $valueLength > 0;
 
 		$name = $dbFieldName;  
 		if (isset($mappings[$dbFieldName]))
 			$name = $mappings[$dbFieldName]; 
 
-		if ($p->maxLength && $sl > $p->maxLength) {
+		if ($p->maxLength && $valueLength > $p->maxLength) {
 			$message = 'The "' . $name . '" must be below ' 
 				. $p->maxLength . 'bytes.';
-			Errors::append(5001, $message, $name);
+			Errors::append(self::VALIATION_ERROR_CODE, $message, $name);
 			return false;
 		}
 		if ($notEmpty && $p->isNumeric && !is_numeric($value)) {
 			$message = 'The "' . $name . '" must a valid number.';
-			Errors::append(5001, $message, $name);
+			Errors::append(self::VALIATION_ERROR_CODE, $message, $name);
 			return false;	
 		}
 		if ($notEmpty && $p->isInteger && 
 			filter_var($value, FILTER_VALIDATE_INT) === false) {
 			$message = 'The "' . $name . '" must a valid integer.';
-			Errors::append(5001, $message, $name);
+			Errors::append(self::VALIATION_ERROR_CODE, $message, $name);
 			return false;	
 		}
 		if (!$p->isNullable && (is_null($value) || !$notEmpty)) {
 			$message = 'The "' . $name . '" must not be empty or omitted.';
-			Errors::append(5001, $message, $name);
+			Errors::append(self::VALIATION_ERROR_CODE, $message, $name);
 			return false;		
 		}
 		if ($mode == self::DATA && 
+			$p->isUnique &&
 			Db::has($table, array($dbFieldName => $value))) {
 			$message = 'The "' . $name . '" already exists.';
-			Errors::append(5001, $message, $name);
+			Errors::append(self::VALIATION_ERROR_CODE, $message, $name);
 			return false;			
 		}
 		if ($mode == self::WHERE && 
 			Db::has($table, array($dbFieldName => $value))) {
 			$message = 'The "' . $name . '" does not exists.';
-			Errors::append(5001, $message, $name);
+			Errors::append(self::VALIATION_ERROR_CODE, $message, $name);
 			return false;			
 		}
 		return true;
 	}
 
-	public static function _validate($table, $array, &$result, &$mappings, $mode)
+	private static function _validate($mode, $table, $array, &$result, &$mappings)
 	{
 		foreach ($array as $key => $value) {
-			if (self::_inSpecialKeys($key)) {
+			if (Db::_inMedooSpecialKeys($key)) {
 				if (is_array($value))
-					self::validate($table, $value, $result, $mappings, $mode);
+					self::validate($mode, $table, $value, $result, $mappings);
 			} else {
-				$result &= self::_validateValue($table, $key, $value, $mappings, $mode);
+				$result &= self::_validateValue($mode, $table, $key, $value, $mappings);
 			}
 		}
 	}
 
-	public function validate($mode, $table)
+	public static function validate($mode, $table, $array, $mappings=array())
 	{
 		$result = true;
-		self::_validate($table, $this->params, $result, $this->mappings, $mode);
+		self::_validate($mode, $table, $array, $result, $mappings);
 		return $result;
 	}
 
-	private function __construct($mappings, $source=null)
+	/**
+	 * Bulk extract the fields from a source via case-agnostic match.
+	 * The mappings is an assoc array of 
+	 * '{dbFieldName}' => '{sourceFieldName}' pairs
+	 * @param  array  $source   The source array.
+	 * @param  array  $mappings The mappings array.
+	 * @return array            The extracted result.
+	 */
+	public static function get($source, $mappings)
 	{
-		$this->mappings = $mappings;
-
-		if (!is_array($source))
-			$source = Params::body();
-		
-		$this->params = array();
-
+		$collected = array();
 		foreach ($mappings as $dbFieldName => $sourceFieldName) {
-			$value = null;
-			if (isset($source[$sourceFieldName]))
-				$value = $source[$sourceFieldName];
-			$this->params[$dbFieldName] = $value;
+			$collected[$dbFieldName] = Cases::get($source, $sourceFieldName);
 		}
-
-	}
-
-	public static function from($mappings, $source=null)
-	{
-		return new self($mappings, $source);
+		return $collected;
 	}
 
 	/**
@@ -118,22 +110,16 @@ class Fields
 	 * @param  array   $array   The array to filter.
  	 * @param  boolean $recurse Whether to recurse.
 	 * @return array            An array without the null values.
-	 */
-	public static function _nonNulls($array, $recurse=true) 
+	 */	
+	public static function nonNulls($array, $recurse=true) 
 	{
 		$results = array(); 
 		foreach ($array as $key => $value) {
 			if ($recurse && is_array($value)) 
-				$results[$key] = self::_nonNulls($value, true);
+				$results[$key] = self::nonNulls($value, true);
 			else if (!is_null($value)) $results[$key] = $value;
 		}
 		return $results;
-	}
-
-	public function removeNulls()
-	{
-		$this->params = self::_nonNulls($this->params);
-		return $this;
 	}
 
 }

@@ -8,6 +8,17 @@ namespace MidPay;
  */
 class Params
 {
+	private static $_body;
+	private static $_headers;
+	private static $_client;
+	private static $_isJson;
+	private static $_url;
+
+	private static function _get($array, $key)
+	{
+		return is_null($key) ? $array : Cases::get($array, $key);
+	}
+
 	/**
 	 * Returns the HTTP method in UPPERCASE.
 	 * @param  string $is If provided, returns if the http method is the same.
@@ -24,8 +35,7 @@ class Params
 	 */
 	public static function client()
 	{
-		static $client;
-		if (!isset($client)) {
+		if (!isset(self::$_client)) {
 			$keys = array(
 				'HTTP_CLIENT_IP',
 				'HTTP_X_FORWARDED_FOR',
@@ -34,90 +44,77 @@ class Params
 				'HTTP_REFERER',
 				'HTTP_USER_AGENT'
 			);
-			$client = array();
+			self::$_client = array();
 			foreach ($keys as $k) {
 				if (isset($_SERVER[$k]))
-					$client[$k] = $_SERVER[$k];
+					self::$_client[$k] = $_SERVER[$k];
 			}
 		} 
-		return $client;
+		return self::$_client;
 	}
 
 	/**
 	 * Returns the component of the url path, or the whole url path.
 	 * To get an index from the back, use a negative index.
-	 * All components will be converted to lowercase.
 	 * @param  integer $index The index of the path component. 
 	 *                        Use null to get the whole path.
 	 * @return mixed          The path component, or the whole url path.
 	 */
 	public static function url($index=null) 
-	{
-		static $url;
+	{	
 		if (is_null($index)) {
-			if (isset($url)) return $url;
+			if (isset(self::$_url)) return self::$_url;
 			$r = $_SERVER['REQUEST_URI']; 
 			$r = strtok($r, '?');
 			$s = explode('/', $_SERVER['SCRIPT_NAME']); 
-			return ($url = array_map('strtolower', 
-				array_values(array_diff(isset($r) ? explode('/', $r) : $s, $s))));	
+			return (self::$_url = 
+				array_values(array_diff(isset($r) ? explode('/', $r) : $s, $s)));	
 		} else {
-			$p = self::url();			
-			if ($index < 0) $index = sizeof($p) + $index;
-			return $index < sizeof($p) && $index >= 0 ? $p[$index] : '';
+			return Utils::at(self::url(), $index);
 		}
-	}
-
-	/**
-	 * Returns the header value for the key.
-	 * Uses case-insensitive search.
-	 * @param  mixed   $key The key of the header,
-	 * @return string       The value of the header.
-	 */
-	public static function headers($key=null)
-	{
-		static $headers;
-		if (!isset($headers)) {
-			$prefix = 'http_';
-			$headers = array();
-			$o = strlen($prefix);
-			foreach ($_SERVER as $k => $v) 
-				if (substr(($k = strtolower($k)), 0, $o)  == $prefix) {
-					$k = str_replace('-', '_', strtolower('' . substr($k, $o)));
-					$headers[$k] = $v;
-				}
-		}
-		if (is_null($key)) {
-			return $headers;
-		}
-		$key = str_replace('-', '_', strtolower('' . $key));
-		foreach ($headers as $k => $v) {
-			if ($key == $k)
-				return $v;
-		}
-		return null;
 	}
 	
 	/**
+	 * Returns the query value for the key. ($_GET)
+	 * Uses case-agnostic search.
+	 * @param  mixed   $key The key.
+	 * @return string       The value.
+	 */
+	public static function query($key=null)
+	{
+		return self::_get($_GET, $key);
+	}
+
+	/**
 	 * Returns the header value for the key.
-	 * Uses case-insensitive search.
-	 * @param  mixed   $key The key of the header,
-	 * @return string       The value of the header.
+	 * Uses case-agnostic search.
+	 * @param  mixed   $key The key.
+	 * @return string       The value.
+	 */
+	public static function headers($key=null)
+	{
+		if (!isset(self::$_headers)) {
+			$prefix = 'http_';
+			self::$_headers = array();
+			$o = strlen($prefix);
+			foreach ($_SERVER as $k => $v) 
+				if (substr(($k = strtolower($k)), 0, $o)  == $prefix) {
+					self::$_headers[substr($k, $o)] = $v;
+				}
+		}
+		return self::_get(self::$_headers, $key);
+	}
+	
+	/**
+	 * Returns the cookie value for the key. ($_COOKIE)
+	 * Uses case-agnostic search.
+	 * @param  mixed   $key The key.
+	 * @return string       The value.
 	 */
 	public static function cookies($key=null)
 	{
-		if (is_null($key)) {
-			return $_COOKIE;
-		}
-		foreach ($_COOKIE as $k => $v)  {
-			if (strtolower($k) == $key)
-				return $v;
-		}
-		return null;
+		return self::_get($_COOKIE, $key);
 	}
-
-	private static $_body;
-	private static $_isJson;
 	
 	/**
 	 * Internal function for parsing the body.
@@ -157,19 +154,12 @@ class Params
 	/**
 	 * Returns the value for the key in the body.
 	 * @param  mixed  $key The key.
-	 * @return mixed       The value for the key.
+	 * @return mixed       The value.
 	 */
 	public static function body($key=null) 
 	{
 		self::_parseBody();
-		if (is_null($key)) {
-			return self::$_body;
-		} else {
-			if (isset(self::$_body[$key])) {
-				return self::$_body[$key];
-			} 
-			return null;
-		}	
+		return self::_get(self::$_body, $key);
 	}
 	
 }

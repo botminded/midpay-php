@@ -1,5 +1,8 @@
 <?php
 
+// The order matters.
+include(realpath(dirname(__FILE__)).'/lib/Utils.php');
+include(realpath(dirname(__FILE__)).'/lib/Cases.php');
 include(realpath(dirname(__FILE__)).'/lib/Json.php');
 include(realpath(dirname(__FILE__)).'/lib/Params.php');
 include(realpath(dirname(__FILE__)).'/lib/Crypto.php');

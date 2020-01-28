@@ -1,6 +1,7 @@
 <?php
 
-include(realpath(dirname(__FILE__)).'/modules/Log.php');
+// The order matters.
+include(realpath(dirname(__FILE__)).'/modules/Logs.php');
 include(realpath(dirname(__FILE__)).'/modules/Auth.php');
-include(realpath(dirname(__FILE__)).'/modules/Callback.php');
-include(realpath(dirname(__FILE__)).'/modules/Rotation.php');
+include(realpath(dirname(__FILE__)).'/modules/Callbacks.php');
+include(realpath(dirname(__FILE__)).'/modules/Rotations.php');

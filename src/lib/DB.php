@@ -124,7 +124,7 @@ class Db
 		return false;
 	}
 
-	private static function _inSpecialKeys($k) 
+	public static function _inMedooSpecialKeys($k) 
 	{
 		return in_array($k, array('AND', 'OR', 'GROUP', 'ORDER', 'HAVING', 'LIMIT', 'LIKE', 'MATCH'));
 	}
@@ -135,7 +135,7 @@ class Db
 			$a = array(); 
 			$b = array();
 			foreach ($where as $key => $value) {
-				if (!self::_inSpecialKeys($key)) $a[$key] = $value;
+				if (!self::_inMedooSpecialKeys($key)) $a[$key] = $value;
 				else $b[$key] = $value;
 			}
 			if (sizeof($a)) $b['AND'] = $a;
@@ -261,14 +261,16 @@ class Db
 			} else { // sqlite
 
 				$tables = self::query('SELECT name FROM sqlite_master where type=\'table\'');
-				foreach ($tables as $table) {
+
+				foreach ($tables as $t) {
+					$t = $t['name'];
 					// Sqlite will require a different method (using pragma) to get the metadata
 					$uniqueColumns = array();
-					foreach (self::query("PRAGMA index_list('$table')") as $f) if ($f['unique'])
+					foreach (self::query("PRAGMA index_list('$t')") as $f) if ($f['unique'])
 						foreach (self::query("PRAGMA index_info('".$f['name']."')") as $g) 
 							$uniqueColumns[] = $g['name'];
 
-					foreach (self::query("PRAGMA table_info('$table')") as $f) {
+					foreach (self::query("PRAGMA table_info('$t')") as $f) {
 						$v = explode(' ', strtolower($f['type']))[0];
 						$maxLength = 0;
 						if (($p = strpos($v, '(')) !== false) {
@@ -283,7 +285,7 @@ class Db
 						$isInteger = in_array($type, $integerTypes) || $isBoolean;
 						$isNumeric = in_array($type, $numericTypes) || $isInteger;
 
-						self::$_schema[$f['TABLE_NAME']][$f['name']] = (object) array(
+						self::$_schema[$t][$f['name']] = (object) array(
 							'type' => $type, 
 							'maxLength' => $maxLength,
 							'isNumeric' => $isNumeric,

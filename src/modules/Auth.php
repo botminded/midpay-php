@@ -5,12 +5,26 @@ namespace MidPay;
 class Auth
 {
 	private static $_inited = false;
+	private static $_success = false;
 	private static $_userId = null;
 	private static $_userType = null;
 	private static $_authType = null;
 	private static $_sessionId = null;
 	private static $_authLogId = null;
 
+	const API_KEY = 'API_KEY';
+	const SESSION = 'SESSION';
+
+	const SUCCESS = 'SUCCESS';
+	const FAILURE = 'FAILURE';
+
+	const LOG_TYPE = 'AUTH';
+
+	/**
+	 * Tries to authenticate based on session.
+	 * @param  string $sessionId The session id.
+	 * @return boolean           Whether success or not.
+	 */
 	private static function _authSession($sessionId)
 	{
 		if (!is_null($sessionId)) {
@@ -21,7 +35,7 @@ class Auth
 			));
 
 			if ($sessionRow) {
-				self::$_authType = 'SESSION';
+				self::$_authType = self::API_SESSION;
 				self::$_sessionId = $sessionId;
 				self::$_userId = $sessionRow['user_id'];
 				$userRow = Db::get('users', array(
@@ -38,6 +52,11 @@ class Auth
 		return false;
 	}
 
+	/**
+	 * Tries to authenticate based on api key.
+	 * @param  string $sessionId The api key.
+	 * @return boolean           Whether success or not.
+	 */
 	private static function _authApiKey($apiKey)
 	{
 		if (!is_null($apiKey)) {
@@ -49,7 +68,7 @@ class Auth
 			));
 
 			if ($userRow) {
-				self::$_authType = 'API_KEY';
+				self::$_authType = self::API_KEY;
 				self::$_userId = $userRow['user_id'];
 				self::$_userType = $userRow['type'];
 				return true;	
@@ -58,12 +77,16 @@ class Auth
 		return false;	
 	}
 
+	/**
+	 * Initialize the authentication variables 
+	 * when any method of this static class is first called.
+	 */
 	private static function _init()
 	{
 		if (!self::$_inited) {
 			self::$_inited = true;
 
-			$authed = (
+			self::$_success = (
 				self::_authSession(Params::body('session')) ||
 				self::_authSession(Params::body('sessionId')) ||
 				self::_authSession(Params::headers('session')) ||
@@ -72,12 +95,8 @@ class Auth
 				self::_authSession(Params::cookies('sessionId')) ||
 
 				self::_authApiKey(Params::headers('API-Key')) ||
-				self::_authApiKey(Params::headers('API_Key')) ||
-				self::_authApiKey(Params::headers('apiKey')) ||
 				self::_authApiKey(Params::headers('key')) ||
 				self::_authApiKey(Params::body('API-Key')) ||
-				self::_authApiKey(Params::body('API_Key')) ||
-				self::_authApiKey(Params::body('apiKey')) ||
 				self::_authApiKey(Params::body('key'))
 			);
 
@@ -86,20 +105,38 @@ class Auth
 				'type' => self::$_authType
 			));
 			
-			if ($authed) {
-				self::$_authLogId = Log::insert('AUTH', 'SUCCESS', $logMessage);
-			} else {
-				self::$_authLogId = Log::insert('AUTH', 'FAILURE', $logMessage);
-			}
+			Logs::insert(
+				self::LOG_TYPE, 
+				self::$_success ? self::SUCCESS : self::FAILURE, 
+				$logMessage
+			);
 		}
 	}
 
+	/**
+	 * Returns whether the user is authenticated.
+	 * @return boolean
+	 */
+	public static function success()
+	{
+		self::_init();
+		return self::$_success;
+	}
+
+	/**
+	 * Returns the user id of the current user.
+	 * @return string
+	 */
 	public static function userId()
 	{
 		self::_init();
 		return self::$_userId;
 	}
 
+	/**
+	 * Returns the type of authentication used
+	 * @return [type] [description]
+	 */
 	public static function type()
 	{
 		self::_init();

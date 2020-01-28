@@ -1,0 +1,1 @@
+{"headers":{"content_type":"application\/x-www-form-urlencoded","content_length":"71","connection":"close","referer":"https:\/\/midpay.cc\/dev\/ben\/scrap\/recv_callback.php","accept_encoding":"deflate, gzip","accept":"*\/*","user_agent":"php-requests\/1.7","host":"midpay.cc"},"query":[],"body":{"orderId":"OUNFC2KG08","amount":"88.1200","status":"SUCCESS","closed":"1579762150"}}

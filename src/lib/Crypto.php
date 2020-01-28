@@ -50,7 +50,7 @@ class Crypto
 	 * @param  string $chars  The characters to choose from.
 	 * @return string         The generated string.
 	 */
-	public static function randString($length, $chars) 
+	public static function randString($length, $chars=self::BASE_36_CHARS) 
 	{
 		$s = '';
 		$j = $l = (int) (($length = $length < 0 ? 0 : $length) * 1.1);
@@ -85,7 +85,7 @@ class Crypto
 			if ($length < 1) 
 				return '';
 		}
-		for ($i = 0; $i < 9; $i++) {
+		for ($i = 0; $i < 99; $i++) {
 			if (!Db::has($table, array($field => $r = self::randString($length, $chars))))
 				return $r;
 		}

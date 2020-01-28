@@ -2,7 +2,7 @@
 
 namespace MidPay;
 
-class Log
+class Logs
 {
 	public static function insert($type, $tag, $message)
 	{

@@ -16,7 +16,8 @@ $pages = array(
 	'deposits', 
 	'gateways',
 	'groups',
-	'users'
+	'users',
+	'callback'
 );
 
 foreach ($pages as $c) 
