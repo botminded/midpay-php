@@ -1,0 +1,25 @@
+{
+	"gatewayId": "FakePay5",
+	"name": "FakePay LOL",
+	"description": "some shit that we need for mockup",
+	"deposits": {
+		"create": "FakePay.deposits.create.php",
+		"check": "FakePay.deposits.check.php",
+		"callback": "FakePay.deposits.callback.php",
+		"channels": [
+			"AliPay",
+			"WeChat",
+			"UnionQuick"
+		]
+	},
+	"withdrawals": {
+		"create": "FakePay.withdrawals.create.php",
+		"check": "FakePay.withdrawals.check.php",
+		"callback": "FakePay.withdrawals.callback.php",
+		"channels": [
+			"A",
+			"B",
+			"C"
+		]
+	}
+}

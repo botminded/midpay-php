@@ -50,10 +50,9 @@ foreach ($gateways as $gatewayId => $channels) {
 		Db::insert('channels', array(
 			'gateway_id' => $gatewayId,
 			'channel' => $channel,
-			'ping' => 1,
 			'enabled' => 1,
 			'rotation_weight' => $w++,
-			'type' => 'DEPOSIT',
+			'type' => Channels::TYPE_DEPOSITS,
 		));
 	}
 }
@@ -146,9 +145,7 @@ $rows = Db::query('SELECT DISTINCT ' .
 	implode(', ', array(
 		'channels.gateway_id',
 		'channels.channel',
-		'channels.ping',
 		'channels.rotation_weight',
-		'channels.type',
 	)) . ' FROM ' .
 	implode(', ', array(
 		'channels',
@@ -159,9 +156,12 @@ $rows = Db::query('SELECT DISTINCT ' .
 	implode(' AND ', array(
 		'channels.gateway_id = group_channels.gateway_id',
 		'channels.channel = group_channels.channel',
+		'channels.exists = 1',
 		'channels.enabled = 1',
-
+		'channels.type = \'' . Channels::TYPE_DEPOSITS . '\'',
+		
 		'gateways.gateway_id = channels.gateway_id',
+		'gateways.exists = 1',
 		'gateways.enabled = 1',
 
 		'user_groups.group_id = group_channels.group_id',
@@ -175,8 +175,15 @@ $rows = Db::query('SELECT DISTINCT ' .
 		'channels.channel ASC'
 	))
 );
+//var_dump(Db::select('channels', '*'));
+/*var_dump(Db::select('channels', '*'));
+var_dump(Db::select('group_channels', '*'));
+var_dump(Db::select('user_groups', '*'));
+var_dump(Db::select('gateways', '*'));*/
 
 $rows = Utils::assocRows($rows);
+
+
 
 $attemptIds = array();
 

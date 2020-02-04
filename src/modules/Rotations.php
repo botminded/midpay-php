@@ -2,6 +2,11 @@
 
 namespace MidPay;
 
+/**
+ * A static class for Rotation logic.
+ * Note: rotations are only defined for deposits.
+ * For withdrawals, we will use another way.
+ */
 class Rotations
 {
 	const WEIGHTED_RANDOM = 'WR';
@@ -38,9 +43,7 @@ class Rotations
 			implode(', ', array(
 				'channels.gateway_id',
 				'channels.channel',
-				'channels.ping',
 				'channels.rotation_weight',
-				'channels.type',
 			)) . ' FROM ' .
 			implode(', ', array(
 				'channels',
@@ -51,9 +54,12 @@ class Rotations
 			implode(' AND ', array(
 				'channels.gateway_id = group_channels.gateway_id',
 				'channels.channel = group_channels.channel',
+				'channels.exists = 1',
 				'channels.enabled = 1',
+				'channels.type = \'' . Channels::TYPE_DEPOSITS . '\'',
 
 				'gateways.gateway_id = channels.gateway_id',
+				'gateways.exists = 1',
 				'gateways.enabled = 1',
 
 				'user_groups.group_id = group_channels.group_id',
@@ -69,7 +75,6 @@ class Rotations
 		);
 		return Utils::assocRows($rows);
 	}
-
 
 	private static function _weightedRoundRobinOrder($rows)
 	{
@@ -140,7 +145,7 @@ class Rotations
 		$maxFactor = 0;
 		$bestIndex = 0;
 		foreach ($statRows as $statRow) {
-			$i = (int)$statRow['i'];
+			$i = (int)($statRow['i']);
 			$count = (int)($statRow['count']);
 			$successRate = $count < 1 ? 
 				1.0 : 

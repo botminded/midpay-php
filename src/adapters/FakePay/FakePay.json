@@ -1,0 +1,26 @@
+{
+	"gatewayId": "FakePay",
+	"name": "FakePay LOL",
+	"description": "some shit that we need for mockup",
+	"exists": 1, 
+	"deposits": {
+		"create": "FakePay.deposits.create.php",
+		"check": "FakePay.deposits.check.php",
+		"callback": "FakePay.deposits.callback.php",
+		"channels": {
+			"A": {"exists": 1},
+			"B": {"exists": 1},
+			"C": {"exists": 1}
+		}
+	},
+	"withdrawals": {
+		"create": "FakePay.withdrawals.create.php",
+		"check": "FakePay.withdrawals.check.php",
+		"callback": "FakePay.withdrawals.callback.php",
+		"channels": {
+			"A": {"exists": 1},
+			"B": {"exists": 1},
+			"C": {"exists": 1}
+		}
+	}
+}

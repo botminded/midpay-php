@@ -50,6 +50,11 @@ class Db
 		return $db;
 	}
 
+	public static function debug()
+	{
+		self::instance()->debug();	
+	}
+
 	public static function hasTransaction() 
 	{
 		return self::$_hasTransaction;

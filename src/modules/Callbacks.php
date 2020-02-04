@@ -3,7 +3,9 @@
 namespace MidPay;
 
 require_once(realpath(dirname(__FILE__)).'/../lib/external/Requests.php');
-\Requests::register_autoloader();
+use Requests;
+
+Requests::register_autoloader();
 
 class Callbacks
 {		
@@ -44,13 +46,26 @@ class Callbacks
 		return $callback;
 	}
 
+	public static function isValid($callback) 
+	{
+		$callback = self::parse($callback);
+		if (!is_null($callback) &&
+			is_array($callback) &&
+			isset($callback['url']) && 
+			!empty($callback['url']) && 
+			filter_var($callback['url'], FILTER_VALIDATE_URL)) {
+			return true;
+		}
+		return false;
+	}
+
 	public static function insert($callback, $data, 
 		$numRetries=8,
 		$intervalGrowthExponent=2,
 		$intervalInitialValue=2)
 	{
 		$callback = self::parse($callback);
-		if (is_null($callback) || !is_array($callback)) 
+		if (!self::isValid($callback)) 
 			return null;
 
 		try {
@@ -116,7 +131,7 @@ class Callbacks
 				$options = array();
 			}
 
-			return \Requests::request($url, 
+			return Requests::request($url, 
 				$toSend['headers'], 
 				$toSend['body'], 
 				$method, 
@@ -137,28 +152,36 @@ class Callbacks
 		$updates = array();
 		foreach ($rows as $row) {
 			$deserialized = Json::decode($row['serialized']);
-			$request = self::_request($deserialized['callback'], $deserialized['data']);
-
-			if (!is_null($request)) {
-				$now = Timestamp::now();
-				if ($request->status_code == 200) {
-					$updates[$row['callback_id']] = array(
-						'retries_left' => 0,
-						'last_attempt' => $now
-					);
-					$hasDelete = true;
-				} else {
-					$interval = ((int)($row['last_attempt']) - (int)($row['next_attempt'])) * 
-						(int)($deserialized['backoff']);
-					if (!(0 < $interval && $interval < 86400)) $interval = 60;
-					$retriesLeft = (int)($row['retries_left']) - 1;
-					$updates[$row['callback_id']] = array(
-						'retries_left' => $retriesLeft,
-						'last_attempt' => $now,
-						'next_attempt' => $now + $interval
-					);
-					if ($retriesLeft <= 0) $hasDelete = true;
-				}
+			$now = Timestamp::now();
+			if (self::isValid($deserialized['callback'])) {
+				$request = self::_request($deserialized['callback'], $deserialized['data']);
+				if (!is_null($request)) {
+					
+					if ($request->status_code == 200) {
+						$updates[$row['callback_id']] = array(
+							'retries_left' => 0,
+							'last_attempt' => $now
+						);
+						$hasDone = true;
+					} else {
+						$interval = ((int)($row['last_attempt']) - (int)($row['next_attempt'])) * 
+							(int)($deserialized['backoff']);
+						if (!(0 < $interval && $interval < 86400)) $interval = 60;
+						$retriesLeft = (int)($row['retries_left']) - 1;
+						$updates[$row['callback_id']] = array(
+							'retries_left' => $retriesLeft,
+							'last_attempt' => $now,
+							'next_attempt' => $now + $interval
+						);
+						if ($retriesLeft <= 0) $hasDone = true;
+					}
+				}	
+			} else {
+				$updates[$row['callback_id']] = array(
+					'retries_left' => 0,
+					'last_attempt' => $now
+				);
+				$hasDone = true;
 			}
 		}
 
@@ -167,7 +190,7 @@ class Callbacks
 				if ($row['retries_left'] > 0) {
 					Db::update('callbacks', $row, array('callback_id' => $id));
 				} else {
-					if ($deleteDone)
+					if ($deleteDone && $hasDone)
 						Db::delete('callbacks', array('callback_id' => $id));
 					else
 						Db::update('callbacks', $row, array('callback_id' => $id));

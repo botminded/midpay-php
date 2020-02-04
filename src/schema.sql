@@ -32,6 +32,7 @@ CREATE TABLE sessions (
 	`user_id` CHAR(31) NOT NULL /* who owns this session */
 );
 
+/* groups are only for deposit channels */
 CREATE TABLE groups (
 	`group_id` CHAR(31) NOT NULL PRIMARY KEY /* try to give meaningful name for id */,
 	`data` TEXT /* json for other information */
@@ -40,18 +41,18 @@ CREATE TABLE groups (
 CREATE TABLE gateways (
 	`gateway_id` CHAR(31) NOT NULL PRIMARY KEY /* try to give meaningful name for id */,
 	`data` TEXT /* json for other information */,
+	`exists` BOOLEAN DEFAULT 1, 
 	`enabled` BOOLEAN DEFAULT 1
 );
 
 CREATE TABLE channels (
 	`gateway_id` CHAR(31) NOT NULL,
 	`channel` CHAR(15) NOT NULL /* channel */,
-	
-	`ping` BOOLEAN DEFAULT 1 /* whether it can be pinged */,
-	
+	`type` CHAR(31) /* enum: DEPOSITS, WITHDRAWALS */,  
+		
+	`exists` BOOLEAN DEFAULT 1, 
 	`enabled` BOOLEAN DEFAULT 1, 
 	`rotation_weight` INTEGER DEFAULT 1,
-	`type` CHAR(31) /* enum: DEPOSIT, WITHDRAW */,  
 	`data` TEXT /* json for other information */
 );
 CREATE UNIQUE INDEX `channels_index` ON `channels`(`gateway_id`, `channel`);
@@ -75,6 +76,7 @@ CREATE TABLE group_channels (
 );
 
 /* key value store for rotation algorithm variables */
+/* we only do rotations for deposits */
 CREATE TABLE rotations (
 	`user_id` CHAR(31) NOT NULL, 
 	`key` CHAR(31) NOT NULL, 

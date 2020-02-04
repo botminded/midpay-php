@@ -16,13 +16,24 @@ if (!is_null($order)) {
 	$status = Params::body('status');
 
 	$now = Timestamp::now();
+	$body = array(
+		'amount' => $order['amount'], 
+		'closed' => $now,
+		'orderId' => $order['user_order_id'],
+		'status' => $status,
+	);
+	
+	ksort($body);
+	$sign = '';
+	foreach ($parameter as $key => $value) {
+		$sign .= $key . '=' . $value . '&';
+	}
+	$sign .= Auth::apiKey();
+	$sign = hash('sha256', $sign);
+	$body['sign'] = $sign;
+
 	Callbacks::insert($data['callback'], array(
-		'body' => array(
-			'orderId' => $order['user_order_id'],
-			'amount' => $order['amount'], 
-			'status' => $status,
-			'closed' => $now
-		)
+		'body' => $body
 	));
 
 	Db::update('orders', array(

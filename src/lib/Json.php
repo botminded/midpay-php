@@ -88,5 +88,16 @@ class Json
 		if (is_object($decoded) || is_array($decoded))
 			self::_objectsToAssoc($decoded);
 		return $decoded;
-	}	
+	}
+
+	/**
+	 * Returns whether the array was orginally an assoc
+	 * in the json.
+	 * @param  array  $array The array
+	 * @return boolean       
+	 */
+	public static function isAssoc($array)
+	{
+		return is_array($array) && isset($t[chr(1)]);
+	}
 }

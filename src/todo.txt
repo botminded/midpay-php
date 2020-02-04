@@ -1,2 +1,42 @@
 
 
+
+1. Write out the json config file for FakePay
+	- Write the deposit create adapter (to check on )
+	- Write the deposit check adapter
+	- Write the deposit callback adapter
+
+	We call these the 4 Cs: config, create, check, callback
+
+2. Now, have a single example, let's duplicate it as FakePay2, FakePay3, ..., FakePay10, so that we can continue...
+
+3. Now, let's make a script that will install all these FakePays by scanning through their config files.
+
+4. let's make a WonderfulPay version of the 4C's.
+	
+	a. First, check if we can use Requests to replace curl for creating deposits. If can, better. If cannot, nevermind.
+
+	b. Right now the WonderfulPay script only has the creation part provided. We don't have a working example of receiving the callback. So, before we go make the callback adapter, let's just make a callback endpoint that dumps the whole Request::body() into a file.
+
+	c. For the creation adapter, we know it is working if it returns something.
+	d. For the check adapter, we know it is working if it returns something.
+	e.For the callback adapter, we have to call the guys to pay something. 
+
+The first payment gateway integration will defintely be the hardest, because we have to not only firm up the rotation + adapter mechanism, we also don't how the WonderfulPay callback actually gets received.
+
+
+
+
+
+
+
+
+
+
+
+Installing algo:
+- Scan the whole folder.
+- Must get all the shyt into memory.
+- If the configs' max last modified time is > the last modified time of the mapping file, recreate it.
+
+

@@ -8,13 +8,18 @@ namespace MidPay;
  */
 class Fields
 {
-	public $params;
-	public $mappings;
-
 	const WHERE = 1;
 	const DATA = 2;
 
-	const VALIATION_ERROR_CODE = 5001;
+	private static $_errorCode = 0;
+
+	public static function errorCode($code=null)
+	{
+		if (!is_null($code)) {
+			self::$_errorCode = $code;
+		}
+		return self::$_errorCode;
+	}
 
 	private static function _validateValue($mode, $table, $dbFieldName, $value, &$mappings)
 	{
@@ -34,36 +39,36 @@ class Fields
 		if ($p->maxLength && $valueLength > $p->maxLength) {
 			$message = 'The "' . $name . '" must be below ' 
 				. $p->maxLength . 'bytes.';
-			Errors::append(self::VALIATION_ERROR_CODE, $message, $name);
+			Errors::append(self::$_errorCode, $message, $name);
 			return false;
 		}
 		if ($notEmpty && $p->isNumeric && !is_numeric($value)) {
 			$message = 'The "' . $name . '" must a valid number.';
-			Errors::append(self::VALIATION_ERROR_CODE, $message, $name);
+			Errors::append(self::$_errorCode, $message, $name);
 			return false;	
 		}
 		if ($notEmpty && $p->isInteger && 
 			filter_var($value, FILTER_VALIDATE_INT) === false) {
 			$message = 'The "' . $name . '" must a valid integer.';
-			Errors::append(self::VALIATION_ERROR_CODE, $message, $name);
+			Errors::append(self::$_errorCode, $message, $name);
 			return false;	
 		}
 		if (!$p->isNullable && (is_null($value) || !$notEmpty)) {
 			$message = 'The "' . $name . '" must not be empty or omitted.';
-			Errors::append(self::VALIATION_ERROR_CODE, $message, $name);
+			Errors::append(self::$_errorCode, $message, $name);
 			return false;		
 		}
 		if ($mode == self::DATA && 
 			$p->isUnique &&
 			Db::has($table, array($dbFieldName => $value))) {
 			$message = 'The "' . $name . '" already exists.';
-			Errors::append(self::VALIATION_ERROR_CODE, $message, $name);
+			Errors::append(self::$_errorCode, $message, $name);
 			return false;			
 		}
 		if ($mode == self::WHERE && 
 			Db::has($table, array($dbFieldName => $value))) {
 			$message = 'The "' . $name . '" does not exists.';
-			Errors::append(self::VALIATION_ERROR_CODE, $message, $name);
+			Errors::append(self::$_errorCode, $message, $name);
 			return false;			
 		}
 		return true;

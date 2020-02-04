@@ -11,6 +11,7 @@ class Auth
 	private static $_authType = null;
 	private static $_sessionId = null;
 	private static $_authLogId = null;
+	private static $_apiKey = null;
 
 	const API_KEY = 'API_KEY';
 	const SESSION = 'SESSION';
@@ -68,6 +69,7 @@ class Auth
 			));
 
 			if ($userRow) {
+				self::$_apiKey = $apiKey;
 				self::$_authType = self::API_KEY;
 				self::$_userId = $userRow['user_id'];
 				self::$_userType = $userRow['type'];
@@ -135,12 +137,22 @@ class Auth
 
 	/**
 	 * Returns the type of authentication used
-	 * @return [type] [description]
+	 * @return string
 	 */
 	public static function type()
 	{
 		self::_init();
 		return self::$_authType;
+	}
+
+	/**
+	 * Returns the api key, if authenticated.
+	 * @return string
+	 */
+	public static function apiKey()
+	{
+		self::_init();
+		return self::$_apiKey;
 	}
 
 	public static function authLogId()
