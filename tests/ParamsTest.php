@@ -12,40 +12,59 @@ use MidPay\Params;
 class ParamsTest extends TestCase
 {
     private $_SERVER;
+    private $_GET;
+    private $_COOKIE;
+
+    protected function setUp() : void
+    {
+        $this->params = new Params();
+    }
+
+    protected function tearDown() : void
+    {
+        $this->params = NULL;
+    }
+
     public function testClientFunction()
     {
-        $this->assertIsArray( Params::client() );
+        $this->assertIsArray($this->params->client());
     }
 
     public function testUrlFunction()
     {
-        $_SERVER['REQUEST_URI'] = 'www.google.com';
-        $this->assertIsArray(Params::url());
+        $_SERVER['REQUEST_URI'] = 'www.google.com?anks=1';
+        $this->assertIsArray($this->params->url());
     }
 
     public function testHeaderFunction()
     {
-       $this->assertIsArray(Params::headers());
+        $this->assertIsArray($this->params->headers());
     }
 
     public function testQueryFunction()
     {
-       $this->assertIsArray(Params::query());
+        $_GET['params'] = 1;
+        $this->assertEquals($_GET ,$this->params->query());
     }
 
     public function testCookiesFunction()
     {
-        $this->assertIsArray(Params::cookies());
+        $this->assertEquals($_COOKIE, $this->params->cookies());
     }
 
     public function testMethodFunction()
     {
-        $_SERVER['REQUEST_METHOD'] = 'get';
-        $this->assertIsString(Params::method());
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $this->assertEquals($_SERVER['REQUEST_METHOD'], $this->params->method());
+    }
+
+    public function testBodyFunction()
+    {
+        $this->assertIsArray($this->params->body());
     }
 
     public function testJsonFunction()
     {
-        $this->assertTrue(Params::isJson());
+        $this->assertTrue($this->params->isJson());
     }
 }
